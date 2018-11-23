@@ -41,7 +41,7 @@ class DoubanSpider(Spider):
         db = client[database]
         collection = db[collection]
         #.skip(100)
-        users_id= collection.find({},{'_id':0,'id':1}).limit(1).skip(150)
+        users_id= collection.find({},{'_id':0,'id':1}).limit(1211).skip(3)
         return users_id
 
     def start_requests(self):
@@ -50,7 +50,7 @@ class DoubanSpider(Spider):
 
 
     def parse_reviews(self,response):
-        uids = self.get_id(collection='users', database='new_douban')
+        uids = self.get_id(collection='users', database='real_douban')
         for uid in uids:
             if uid:
                 uid = uid['id']
@@ -68,14 +68,14 @@ class DoubanSpider(Spider):
         # 电影短评的直接链接列表
         #print(user_url)
         for review in reviews:
-            print(review)
+            #print(review)
             if 'movie'in review:
                yield Request(url=review, callback=self.parse_movie_review)
             if 'music'in review:
                yield Request(url=review, callback=self.parse_music_review)
             if 'book'in review:
                yield Request(url=review, callback=self.parse_book_review)
-            '''next_page = response.xpath(
+            next_page = response.xpath(
                 '//span[@class="next"]//a[contains(.,"后页")]/@href').extract_first()
             if next_page:
                 next_page_url = str(user_url) + next_page
@@ -96,7 +96,7 @@ class DoubanSpider(Spider):
         r_movie_id = re.search('.*?https://movie.douban.com/subject/(.*?)/.*?', movie_id)
         f_movie_id = r_movie_id.group(1)
         movie_reviewer_name = response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:reviewer"]/text()').extract_first()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a//span/text()').extract_first()
         movie_reviewer_id = response.xpath(
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a').re_first(
             '<a href="https://www.douban.com/people/(.*?)/"')
@@ -104,11 +104,11 @@ class DoubanSpider(Spider):
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/span').re_first(
             '<span class="allstar(\d+)0.*?</span>')
         movie_review_time = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:dtreviewed"]/text()').extract()).strip()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span/@content').extract()).strip()
         movie_review_title = response.xpath(
             '//*[@id="content"]//div[@class="article"]//span[@property="v:summary"]/text()').extract_first()
         movie_review_content = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@property="v:description"]//text()').extract()).replace(
+            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@class="review-content clearfix"]//text()').extract()).replace(
             '\n', '').strip()
         movie_review_useful_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
@@ -116,11 +116,12 @@ class DoubanSpider(Spider):
         movie_review_useless_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
             '.*?没用 (\d+).*?')
-        movie_review_info = [{'movie_reviewer_name': movie_reviewer_name, 'movie_reviewer_id': movie_reviewer_id,
+        movie_review_info = [{'movie_id':f_movie_id,'movie_reviewer_name': movie_reviewer_name, 'movie_reviewer_id': movie_reviewer_id,
                               'movie_reviewer_score': movie_reviewer_score, 'movie_review_time': movie_review_time,
                               'movie_review_title': movie_review_title, 'movie_review_content': movie_review_content,
                               'movie_review_useful_number': movie_review_useful_number,
                               'movie_review_useless_number': movie_review_useless_number}]
+        item['movie_reviewer_id'] = movie_reviewer_id
         item['movie_review_url']=movie_review_url
         item['movie_id'] = f_movie_id
         item['movie_review_info'] = movie_review_info
@@ -136,7 +137,7 @@ class DoubanSpider(Spider):
         r_music_id = re.search('.*?https://music.douban.com/subject/(.*?)/.*?', music_id)
         f_music_id = r_music_id.group(1)
         music_reviewer_name = response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:reviewer"]/text()').extract_first()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a//span/text()').extract_first()
         music_reviewer_id = response.xpath(
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a').re_first(
             '<a href="https://www.douban.com/people/(.*?)/"')
@@ -144,11 +145,11 @@ class DoubanSpider(Spider):
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/span').re_first(
             '<span class="allstar(\d+)0.*?</span>')
         music_review_time = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:dtreviewed"]/text()').extract()).strip()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span/@content').extract()).strip()
         music_review_title = response.xpath(
             '//*[@id="content"]//div[@class="article"]//span[@property="v:summary"]/text()').extract_first()
         music_review_content = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@property="v:description"]//text()').extract()).replace(
+            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@class="review-content clearfix"]//text()').extract()).replace(
             '\n', '').strip()
         music_review_useful_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
@@ -156,12 +157,13 @@ class DoubanSpider(Spider):
         music_review_useless_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
             '.*?没用 (\d+).*?')
-        music_review_info = [{'music_reviewer_name': music_reviewer_name, 'music_reviewer_id': music_reviewer_id,
+        music_review_info = [{'music_id':f_music_id,'music_reviewer_name': music_reviewer_name, 'music_reviewer_id': music_reviewer_id,
                               'music_reviewer_score': music_reviewer_score, 'music_review_time': music_review_time,
                               'music_review_title': music_review_title,
                               'music_review_content': music_review_content,
                               'music_review_useful_number': music_review_useful_number,
                               'music_review_useless_number': music_review_useless_number}]
+        item['music_reviewer_id'] = music_reviewer_id
         item['music_review_url'] = music_review_url
         item['music_id'] = f_music_id
         item['music_review_info'] = music_review_info
@@ -176,7 +178,7 @@ class DoubanSpider(Spider):
         r_book_id = re.search('.*?https://book.douban.com/subject/(.*?)/.*?', book_id)
         f_book_id = r_book_id.group(1)
         book_reviewer_name = response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:reviewer"]/text()').extract_first()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a//span/text()').extract_first()
         book_reviewer_id = response.xpath(
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/a').re_first(
             '<a href="https://www.douban.com/people/(.*?)/"')
@@ -184,11 +186,11 @@ class DoubanSpider(Spider):
             '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]/span').re_first(
             '<span class="allstar(\d+)0.*?</span>')
         book_review_time = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span[@property="v:dtreviewed"]/text()').extract()).strip()
+            '//*[@id="content"]//div[@class="article"]//header[@class="main-hd"]//span/@content').extract()).strip()
         book_review_title = response.xpath(
             '//*[@id="content"]//div[@class="article"]//span[@property="v:summary"]/text()').extract_first()
         book_review_content = ''.join(response.xpath(
-            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@property="v:description"]//text()').extract()).replace(
+            '//*[@id="content"]//div[@class="article"]//div[@class="main-bd"]//div[@class="review-content clearfix"]//text()').extract()).replace(
             '\n', '').strip()
         book_review_useful_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
@@ -196,12 +198,13 @@ class DoubanSpider(Spider):
         book_review_useless_number = response.xpath(
             '//*[@id="content"]//div[@class="article"]//div[@class="main-ft"]//button/text()').re_first(
             '.*?没用 (\d+).*?')
-        book_review_info = [{'book_reviewer_name': book_reviewer_name, 'book_reviewer_id': book_reviewer_id,
+        book_review_info = [{'book_id':f_book_id,'book_reviewer_name': book_reviewer_name, 'book_reviewer_id': book_reviewer_id,
                              'book_reviewer_score': book_reviewer_score, 'book_review_time': book_review_time,
                              'book_review_title': book_review_title,
                              'book_review_content': book_review_content,
                              'book_review_useful_number': book_review_useful_number,
                              'book_review_useless_number': book_review_useless_number}]
+        item['book_reviewer_id'] = book_reviewer_id
         item['book_review_url'] = book_review_url
         item['book_id'] = f_book_id
         item['book_review_info'] = book_review_info

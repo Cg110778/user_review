@@ -31,7 +31,7 @@ class MongoPipeline(object):
 
         if isinstance(item,DoubandetailmoviereviewItem):
             self.db[item.collection].update(
-                {'movie_id': item.get('movie_id')},
+                {'id': item.get('movie_reviewer_id')},
                 {'$addToSet':
                     {
                         'movie_review_info': {'$each':item['movie_review_info']}
@@ -40,7 +40,7 @@ class MongoPipeline(object):
 
         if isinstance(item, DoubandetailmusicreviewItem):
             self.db[item.collection].update(
-                {'music_id': item.get('music_id')},
+                {'id': item.get('music_reviewer_id')},
                 {'$addToSet':
                     {
                         'music_review_info': {'$each': item['music_review_info']}
@@ -49,7 +49,7 @@ class MongoPipeline(object):
 
         if isinstance(item,DoubandetailbookreviewItem):
             self.db[item.collection].update(
-                {'book_id': item.get('book_id')},
+                {'id': item.get('book_reviewer_id')},
                 {'$addToSet':
                     {
                     'book_review_info': {'$each':item['book_review_info']}
